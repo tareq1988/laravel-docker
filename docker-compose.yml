@@ -1,0 +1,42 @@
+version: '3.1'
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: wemail-mailhog
+    ports:
+      - '1026:8025'
+
+  redis:
+    image: redis:alpine
+    container_name: wemail-redis
+
+  mariadb:
+    image: mariadb:10.3
+    container_name: wemail-mariadb
+    working_dir: /application
+    volumes:
+      - .:/application
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=wemail
+      - MYSQL_USER=wemail
+      - MYSQL_PASSWORD=root
+    ports:
+      - '1028:3306'
+
+  webserver:
+    image: nginx:alpine
+    container_name: wemail-webserver
+    working_dir: /application
+    volumes:
+      - .:/var/www/html
+      - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - '1025:80'
+
+  php-fpm:
+    build: .docker/php-fpm
+    container_name: wemail-php-fpm
+    volumes:
+      - .:/var/www/html
+      - ./.docker/php-fpm/php-ini-overrides.ini:/etc/php/7.3/fpm/conf.d/99-overrides.ini
