@@ -32,9 +32,14 @@ services:
     ports:
       - '8081:80'
 
-  php-fpm:
+  app:
     build: .docker/php-fpm
-    container_name: wemail-php-fpm
+    container_name: wemail-app
     volumes:
       - .:/var/www/html
       - ./.docker/php-fpm/php-ini-overrides.ini:/etc/php/7.3/fpm/conf.d/99-overrides.ini
+
+  node:
+    image: node:12.13-alpine
+    volumes:
+      - .:/var/www/html
