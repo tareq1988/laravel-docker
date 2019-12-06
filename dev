@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
 
-# Set environment variables for dev
-export APP_ENV=${APP_ENV:-local}
-export APP_PORT=${APP_PORT:-80}
+# Import the .env file
+if [ -f .env ]
+then
+  export $(cat .env | sed 's/#.*//g' | xargs)
+fi
 
 COMPOSE="docker-compose"
 
 # If we pass any arguments...
 if [ $# -gt 0 ];then
 
+    # start the app
+    if [ "$1" == "start" ]; then
+        $COMPOSE up -d
+
+    # stop the app
+    elif [ "$1" == "stop" ]; then
+        $COMPOSE down
+
     # If "art" is used, pass-thru to "artisan"
     # inside a new container
-    if [ "$1" == "pa" ]; then
+    elif [ "$1" == "pa" ]; then
         shift 1
         $COMPOSE run --rm \
             -w /var/www/html \
@@ -44,6 +54,12 @@ if [ $# -gt 0 ];then
             -w /var/www/html \
             node \
             npm "$@"
+
+    # If "db" is used, run mariadb
+    # from our mariadb container
+    elif [ "$1" == "db-backup" ]; then
+        shift 1
+        docker exec wemail-mariadb mysqldump -u ${DB_USERNAME} -p${DB_PASSWORD} ${DB_DATABASE} > ./data/dumps/dump-$(date +"%d-%m-%Y_%s").sql
 
     # Else, pass-thru args to docker-compose
     else

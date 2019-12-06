@@ -4,11 +4,15 @@ services:
     image: mailhog/mailhog:latest
     container_name: wemail-mailhog
     ports:
-      - '8026:8025'
+      - ${MAILHOG_PORT}:8025
 
   redis:
     image: redis:alpine
     container_name: wemail-redis
+    volumes:
+      - ./data/redis:/data
+    ports:
+      - ${REDIS_PORT}:6379
 
   mariadb:
     image: mariadb:10.3
@@ -17,11 +21,13 @@ services:
       - ./data/mysql:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=wemail
-      - MYSQL_USER=wemail
-      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
     ports:
-      - '3307:3306'
+      - '${MARIADB_PORT}:3306'
+    networks:
+      - app-network
 
   webserver:
     image: nginx:alpine
@@ -29,8 +35,11 @@ services:
     volumes:
       - .:/var/www/html
       - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./.docker/nginx/conf.d/:/etc/nginx/conf.d/
     ports:
-      - '8081:80'
+      - ${NGINX_PORT}:80
+    networks:
+      - app-network
 
   app:
     build: .docker/php-fpm
@@ -38,8 +47,17 @@ services:
     volumes:
       - .:/var/www/html
       - ./.docker/php-fpm/php-ini-overrides.ini:/etc/php/7.3/fpm/conf.d/99-overrides.ini
+    depends_on:
+      - redis
+      - mariadb
+    networks:
+      - app-network
 
   node:
     image: node:12.13-alpine
     volumes:
       - .:/var/www/html
+
+networks:
+  app-network:
+    driver: bridge

@@ -12,5 +12,7 @@ npm-debug.log
 yarn-error.log
 /data/dumps/*
 /data/mysql/*
+/data/redis/*
 !/data/mysql/.gitkeep
 !/data/dumps/.gitkeep
+!/data/redis/.gitkeep
